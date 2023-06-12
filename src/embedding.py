@@ -1,5 +1,8 @@
 # 댓글을 임베딩한다.
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
+tf.get_logger().setLevel('ERROR')
 import numpy as np
 import joblib
 from konlpy.tag import Okt
@@ -10,7 +13,7 @@ import extract_data
 
 
 # fasttext
-ft = fasttext.load_model('embedding_models/fasttext.bin')
+ft = fasttext.load_model('C:/hw/Curse-detection-v2/src/embedding_models/fasttext.bin')
 ft_dimension = ft.get_dimension()
 
 # mfcc
@@ -182,9 +185,9 @@ if __name__ == "__main__":
     x, y = extract_data.preprocessing_data('dataset/data.txt')  # 데이터 전처리 수행
     y = list(map(int, y))
     mfcc_x, mfcc_y = embedding_mfcc(x, y)
-    print(mfcc_x.shape, mfcc_y.shape)
+    #print(mfcc_x.shape, mfcc_y.shape)
     ft_x, ft_y = embedding_fasttext(x, y)
-    print(ft_x.shape, ft_y.shape)
+    #print(ft_x.shape, ft_y.shape)
     if len(mfcc_x) != len(mfcc_y):
         raise Exception('mfcc_x와 mfcc_y의 길이가 다릅니다. 어딘가에 문제가 있는 것 같습니다.')
     if len(ft_x) != len(ft_y):

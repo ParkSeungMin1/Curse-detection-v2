@@ -1,0 +1,11 @@
+drop table PVMM;
+
+create table PVMM(
+id int NOT NULL AUTO_INCREMENT,
+uid varchar(30),
+origin_text varchar(1000),
+filter_text varchar(1000),
+score varchar(50),
+time_stamp datetime,
+primary key(id)
+);

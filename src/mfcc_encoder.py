@@ -1,5 +1,7 @@
 # MFCC embedding을 수행한다.
 import numpy as np
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Dense, Input, Bidirectional, Dropout, GRU, Reshape, BatchNormalization, \
@@ -9,7 +11,7 @@ from char2vec import CHAR2VEC
 
 
 class MfccEmbedding():
-    def __init__(self, enc=None, weights_path="embedding_models/mfcc.h5"):
+    def __init__(self, enc=None, weights_path="C:/hw/Curse-detection-v2/src/embedding_models/mfcc.h5"):
         self.enc = enc
         self.weights_path = weights_path
 
@@ -17,9 +19,9 @@ class MfccEmbedding():
         # mfcc 모델 예측 결과를 반환한다.
         if not self.enc:
             self.enc = self.get_encoder()
-        vec = np.array([self.vectorize(self.decompose(w)) for w in words])  # 임베딩
+        vec = np.array([self.vectorize(self.decompose(w)) for w in words], dtype=object)  # 임베딩
         x = self.padding(vec, 80)  # 패딩
-        return self.enc.predict(x)  # 예측
+        return self.enc.predict(x,verbose=0)  # 예측
 
     def distance(self, a, b):
         # a, b의 유클리드 거리를 구한다.

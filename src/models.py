@@ -1,4 +1,7 @@
 # 모델을 정의한다.
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import tensorflow as tf
 import tensorflow as tf
 from tensorflow.keras.layers import Dense, Bidirectional, LSTM, Concatenate, Dropout, add
 from tensorflow.keras import Input, Model
@@ -24,7 +27,7 @@ class BahdanauAttention(tf.keras.Model):
         self.W2 = Dense(units)
         self.V = Dense(1)
         self.attention_only = attention_only
-
+    @tf.function(reduce_retracing=True) # 추가한 데코레이터
     def call(self, values, query):
         hidden_with_time_axis = tf.expand_dims(query, 1)
 
@@ -67,7 +70,7 @@ class ClassificationModel:
         output = Dense(2, activation="softmax", bias_constraint=norm3, kernel_constraint=norm2)(inter)
         model = Model(inputs=[inp1, inp2], outputs=output)
 
-        optimizer = Adam(lr=0.0001)
+        optimizer = Adam(learning_rate=0.0001)
         model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
         return model
