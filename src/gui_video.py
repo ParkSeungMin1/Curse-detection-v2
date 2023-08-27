@@ -6,6 +6,7 @@ import numpy as np
 import mysql.connector
 from datetime import datetime
 import tkinter as tk
+import tkinter.font
 
 def save_to_db(uid, origin_text, filter_text, score):
     try:
@@ -31,20 +32,8 @@ def save_to_db(uid, origin_text, filter_text, score):
             connection.close()
 
     return True
-
-def callback(recognizer, audio):
-    try:
-        text_var.set("start")
-        text = recognizer.recognize_google(audio, language='ko-KR')
-        current_text = text_var.get()
-        if current_text:
-            text_var.set(current_text + "\n" + str(curse.ensemble(text))+"\n"+curse.masking(text))
-        else:
-            text_var.set(" ")
-    except Exception as e:
-        result_label.config(text="음성을 인식할 수 없습니다.")
         
-def get_threshold(stream, chunk, RATE,seconds=2):
+def get_threshold(stream, chunk, RATE,seconds=0.5):
     audio_energy_values = []
 
     for _ in range(int(seconds / chunk * RATE)):
@@ -55,10 +44,10 @@ def get_threshold(stream, chunk, RATE,seconds=2):
     average = np.mean(audio_energy_values)
     std_dev = np.std(audio_energy_values)
 
-    return int(average + std_dev+100)
+    return int(average + std_dev+300)
 
 def recognize_speech(curse, output_file, text_var, stop_when_silence=1):
-    text_var.set('start')
+    text_var.set('소음치 측정 이후 발화해주세요')
     app.update()
     recognizer = sr.Recognizer()
     FORMAT = pyaudio.paInt16
@@ -75,9 +64,9 @@ def recognize_speech(curse, output_file, text_var, stop_when_silence=1):
 
     SILENCE_THRESHOLD = get_threshold(stream, CHUNK,RATE)  # 소리 강도 임계 값 (잠잠한 환경에 적합)
     current_text = text_var.get()
-    text_var.set(current_text + "\n" +str(SILENCE_THRESHOLD) )
+    text_var.set(current_text + "\n" +"주변 소음치 : "+str(SILENCE_THRESHOLD)+"\n" )
     app.update()
-    #print(f"Calculated silence threshold: {SILENCE_THRESHOLD}")
+    print(f"Calculated silence threshold: {SILENCE_THRESHOLD}")
     current_text = text_var.get()
     text_var.set(current_text + "\n" +"당신의 목소리를 녹음 중입니다..." )
     app.update()
@@ -101,9 +90,9 @@ def recognize_speech(curse, output_file, text_var, stop_when_silence=1):
 
         app.update()  # Tkinter 윈도우 갱신 추가
 
-    #print("녹음이 끝났습니다.")
+    print("녹음이 끝났습니다.")
     current_text = text_var.get()
-    text_var.set(current_text + "\n" +"녹음이 끝났습니다." )
+    text_var.set(current_text + "\n" +"녹음이 끝났습니다."+"\n" )
     app.update()
 
     stream.stop_stream()
@@ -120,31 +109,32 @@ def recognize_speech(curse, output_file, text_var, stop_when_silence=1):
     with sr.AudioFile(output_file) as source:
         audio_data = recognizer.record(source)
     try:
-        #print("음성을 인식 중입니다...")
+        print("비속어 감지 중 ...")
         current_text = text_var.get()
-        text_var.set(current_text + "\n" +"음성을 인식 중입니다..." )
+        text_var.set(current_text + "\n" +"비속어 감지 중..."+"\n" )
         app.update()
         text = recognizer.recognize_google(audio_data, language='ko-KR')
-        #print("Here's the text from the audio:")
+        print("Here's the text from the audio:")
         current_text = text_var.get()
-        text_var.set(current_text + "\n" +"Here's the text from the audio:"+"\n" )
+        #text_var.set(current_text + "\n" +"Here's the text from the audio:"+"\n" )
         app.update()
         ensemble = curse.ensemble(text)
         masking = curse.masking(text)
         current_text = text_var.get()
-        text_var.set(current_text + "\n" +str(ensemble)+"\n"+str(masking)+"\n")
+        print(ensemble)
+        print(masking)
+        text_var.set(current_text + "\n" +"비속어 포함 확률 : "+str(ensemble)+"\n"+"인식 된 음성 : "+text+"\n"+"후처리 완료 문장 : "+str(masking)+"\n")
         app.update()
         
-        #print(ensemble)
-        #print(masking)
+        
         save_to_db("1", text,masking,ensemble)
-        app.after(1500, lambda: recognize_speech(curse, output_file, text_var, stop_when_silence))
+        app.after(1000, lambda: recognize_speech(curse, output_file, text_var, stop_when_silence))
     except Exception:
         current_text = text_var.get()
+        print("다시 녹음해주세요")
         text_var.set(current_text + "\n" +"다시 녹음해주세요")
         app.update()
-        #print("다시 녹음해주세요")
-        app.after(1500, lambda: recognize_speech(curse, output_file, text_var, stop_when_silence))
+        app.after(1000, lambda: recognize_speech(curse, output_file, text_var, stop_when_silence))
 
 
 
@@ -154,13 +144,15 @@ curse = CurseDetector(weights_paths)
 print(curse.masking("loding complete"))
 
 app = tk.Tk()
-app.title("Continuous Speech Recognition and Tkinter")
+app.geometry("1000x500")
+font=tkinter.font.Font(family="맑은 고딕", size=17)
+app.title("소프트웨어 10조 기말발표")
 output_file = "recorded_audio.wav"
-start_btn = tk.Button(app, text="음성 인식 시작", command=lambda: recognize_speech(curse, output_file, text_var))
-start_btn.pack(padx=10, pady=10)
+start_btn = tk.Button(app, text="음성 인식 시작",font=font, command=lambda: recognize_speech(curse, output_file, text_var))
+start_btn.pack(padx=50, pady=50)
 
 text_var = tk.StringVar()
-result_label = tk.Label(app, textvariable=text_var)
-result_label.pack(padx=10, pady=10)
+result_label = tk.Label(app, textvariable=text_var,font=font)
+result_label.pack(padx=50, pady=50)
 
 app.mainloop()
